@@ -2,6 +2,7 @@
 import pygame
 import random
 from ball import Ball
+import sys
 
 class Window:
     def __init__(self, width: int, height: int):
@@ -10,16 +11,18 @@ class Window:
         self.screen = None
         self.mouse_start_pos = None
         self.mouse_start_time = None
+        self.is_running = False
 
     def create(self):
         pygame.init()
         pygame.mixer.init()
         self.screen = pygame.display.set_mode((self.width, self.height))
+        self.is_running = True
 
     def handle_events(self, simulation):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return False
+                self.is_running = False
 
             # Handle mouse events
             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -32,11 +35,10 @@ class Window:
                     hold_time = pygame.time.get_ticks() - self.mouse_start_time
                     radius = max(10, min(100, hold_time // 100))  # Limit the radius between 10 and 100
                     color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-                    # mass = radius**3  # Calculate the mass based on the radius (you can adjust this calculation if needed)
                     ball = Ball(self.mouse_start_pos, (0, 0), radius, color)
                     simulation.add_ball(ball)
 
-        return True
+        return self.is_running
 
     def get_screen(self):
         return self.screen
@@ -49,4 +51,4 @@ class Window:
 
     def close(self):
         pygame.quit()
-        exit()
+        sys.exit()
