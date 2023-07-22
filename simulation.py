@@ -21,6 +21,9 @@ class Simulation:
         self.collision_sound = None
         self.number_collisions = 0
         self.quad_tree = QuadTree((0, 0, self.width, self.height))
+        
+        # Cache dictionary for pygame.font.Font
+        self.font_cache = {}
 
     def add_ball(self, ball: Ball):
         self.balls.append(ball)
@@ -38,12 +41,12 @@ class Simulation:
             ball.draw(surface)
 
         if not self.first_ball_added:
-            font = pygame.font.Font(None, 36)
+            font = self.get_font(None, 36)
             text = font.render("Press the mouse button to create a new ball, or keep the button pressed to enlarge the ball's size.", True, (255, 255, 255))
             surface.blit(text, (0, 0))
 
         if self.debug_mode:
-            font = pygame.font.Font(None, 36)
+            font = self.get_font(None, 36)
             debug_text = f"Number of balls: {len(self.balls)}"
             text = font.render(debug_text, True, (255, 255, 255))
             surface.blit(text, (0, 0))
@@ -51,7 +54,15 @@ class Simulation:
             collision_text = f"Number of collisions: {self.number_collisions}"
             collision_text_render = font.render(collision_text, True, (255, 255, 255))
             surface.blit(collision_text_render, (0, 40))
-
+            
+        
+    def get_font(self, font_name, font_size):
+        key = f"{font_name}_{font_size}"
+        if key not in self.font_cache:
+            self.font_cache[key] = pygame.font.Font(font_name, font_size)
+        return self.font_cache[key]
+    
+    
     def toggle_debug_mode(self):
         self.debug_mode = not self.debug_mode
 

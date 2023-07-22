@@ -3,6 +3,9 @@ import pygame
 import numpy as np
 import random
 
+# Cache dictionary for random.uniform
+random_uniform_cache = {}
+
 class Ball:
     def __init__(self, position, velocity, radius, color):
         self.position = np.array(position, dtype=float)
@@ -19,7 +22,11 @@ class Ball:
         If the key is not present, generate a new random value and store it in the table.
         """
         if key not in self.random_values:
-            self.random_values[key] = random.uniform(value_range[0], value_range[1])
+            if key in random_uniform_cache:
+                self.random_values[key] = random_uniform_cache[key]
+            else:
+                self.random_values[key] = random.uniform(value_range[0], value_range[1])
+                random_uniform_cache[key] = self.random_values[key]
         if random.random() < probability:
             return 1.0 + self.random_values[key]
         return 1.0
