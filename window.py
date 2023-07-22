@@ -12,6 +12,8 @@ class Window:
         self.mouse_start_pos = None
         self.mouse_start_time = None
         self.is_running = False
+        self.random_colors = {}  # Dynamic programming table for storing random colors
+        self.random_radii = {}  # Dynamic programming table for storing random radii
 
     def create(self):
         pygame.init()
@@ -33,8 +35,8 @@ class Window:
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:  # Left mouse button
                     hold_time = pygame.time.get_ticks() - self.mouse_start_time
-                    radius = max(10, min(100, hold_time // 100))  # Limit the radius between 10 and 100
-                    color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+                    radius = self.get_random_radius(hold_time)
+                    color = self.get_random_color()
                     ball = Ball(self.mouse_start_pos, (0, 0), radius, color)
                     simulation.add_ball(ball)
 
@@ -52,3 +54,16 @@ class Window:
     def close(self):
         pygame.quit()
         sys.exit()
+
+    def get_random_radius(self, hold_time):
+        if hold_time not in self.random_radii:
+            radius = max(10, min(100, hold_time // 100))  # Limit the radius between 10 and 100
+            self.random_radii[hold_time] = radius
+        return self.random_radii[hold_time]
+
+    def get_random_color(self):
+        key = tuple(random.randint(0, 255) for _ in range(3))
+        if key not in self.random_colors:
+            color = key
+            self.random_colors[key] = color
+        return self.random_colors[key]

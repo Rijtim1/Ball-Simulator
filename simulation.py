@@ -16,6 +16,7 @@ class Simulation:
         self.first_ball_added = False
         self.collision_sound = None
         self.number_collisions = 0
+        self.distance_table = {}  # Dynamic programming table for storing distances between ball pairs
 
     def add_ball(self, ball: Ball):
         self.balls.append(ball)
@@ -24,6 +25,7 @@ class Simulation:
     def update(self):
         for ball in self.balls:
             ball.update(self.gravity, self.dt, self.width, self.height)
+        self.distance_table.clear()  # Clear the table on each update
         self.check_collisions()
 
     def draw(self, surface):
@@ -50,7 +52,13 @@ class Simulation:
         
     def check_collisions(self):
         for ball1, ball2 in combinations(self.balls, 2):
-            distance = math.sqrt((ball2.position[0] - ball1.position[0]) ** 2 + (ball2.position[1] - ball1.position[1]) ** 2)
+            # Check if the distance between these two balls has been calculated before
+            if (ball1, ball2) not in self.distance_table:
+                distance = math.sqrt((ball2.position[0] - ball1.position[0]) ** 2 + (ball2.position[1] - ball1.position[1]) ** 2)
+                self.distance_table[(ball1, ball2)] = distance
+            else:
+                distance = self.distance_table[(ball1, ball2)]
+
             if distance <= ball1.radius + ball2.radius:
                 self.number_collisions += 1
                 self.resolve_collision(ball1, ball2)
@@ -89,4 +97,3 @@ class Simulation:
         # Update the velocities of the balls
         ball1.velocity = new_velocity1
         ball2.velocity = new_velocity2
-
