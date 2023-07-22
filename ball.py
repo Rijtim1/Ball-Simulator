@@ -2,12 +2,14 @@
 import pygame
 from typing import Tuple
 import random
+import math
 
 class Ball:
     def __init__(self, position, velocity, radius, color):
         self.position = position
         self.velocity = velocity
         self.radius = radius
+        self.radius_squared = radius ** 2
         self.color = color
         self.damping = 0.9
         self.random_values = {}  # Dynamic programming table for storing random values
@@ -24,64 +26,50 @@ class Ball:
         return 1.0
 
     def update(self, gravity: Tuple[float, float], dt: float, width: int, height: int):
-        self.position = (self.position[0] + self.velocity[0] * dt, self.position[1] + self.velocity[1] * dt)
-        self.velocity = (self.velocity[0], self.velocity[1] + gravity[1] * dt)
+        dt_squared = dt * dt
 
-        if self.position[1] + self.radius >= height:
-            self.velocity = (
-                self.velocity[0] * self.damping + self.get_random_value("squish_y", 0.2, (-0.2, 0.2)),
-                -self.velocity[1] * self.damping + self.get_random_value("squish_y", 0.2, (-0.2, 0.2))
-            )
-            self.position = (self.position[0], height - self.radius)
+        x, y = self.position
+        vx, vy = self.velocity
+        radius = self.radius
 
-            if random.random() < 0.2:  # Adjust the probability as desired
-                extra_velocity = random.uniform(0.2, 0.5)  # Adjust the range as desired
-                self.velocity = (
-                    self.velocity[0] * (1 + extra_velocity),
-                    self.velocity[1] * (1 + extra_velocity)
-                )
+        # Update position using Verlet integration with caching
+        new_x = x + vx * dt + 0.5 * gravity[0] * dt_squared
+        new_y = y + vy * dt + 0.5 * gravity[1] * dt_squared
 
-        if self.position[1] - self.radius <= 0:
-            self.velocity = (
-                self.velocity[0] * self.damping + self.get_random_value("squish_y", 0.2, (-0.2, 0.2)),
-                -self.velocity[1] * self.damping + self.get_random_value("squish_y", 0.2, (-0.2, 0.2))
-            )
-            self.position = (self.position[0], self.radius)
+        self.position = (new_x, new_y)
 
-            if random.random() < 0.2:
-                extra_velocity = random.uniform(0.2, 0.5)
-                self.velocity = (
-                    self.velocity[0] * (1 + extra_velocity),
-                    self.velocity[1] * (1 + extra_velocity)
-                )
+        # Update velocity using Verlet integration with caching
+        new_vx = vx + 0.5 * gravity[0] * dt
+        new_vy = vy + 0.5 * gravity[1] * dt
 
-        if self.position[0] - self.radius <= 0:
-            self.velocity = (
-                -self.velocity[0] * self.damping + self.get_random_value("squish_x", 0.2, (-0.2, 0.2)),
-                self.velocity[1] * self.damping + self.get_random_value("squish_x", 0.2, (-0.2, 0.2))
-            )
-            self.position = (self.radius, self.position[1])
+        self.velocity = (new_vx, new_vy)
 
-            if random.random() < 0.2:
-                extra_velocity = random.uniform(0.2, 0.5)
-                self.velocity = (
-                    self.velocity[0] * (1 + extra_velocity),
-                    self.velocity[1] * (1 + extra_velocity)
-                )
+        # Check for collisions with the edges of the window
+        self.handle_collisions(width, height)
 
-        if self.position[0] + self.radius >= width:
-            self.velocity = (
-                -self.velocity[0] * self.damping + self.get_random_value("squish_x", 0.2, (-0.2, 0.2)),
-                self.velocity[1] * self.damping + self.get_random_value("squish_x", 0.2, (-0.2, 0.2))
-            )
-            self.position = (width - self.radius, self.position[1])
+    def handle_collisions(self, width: int, height: int):
+        x, y = self.position
+        vx, vy = self.velocity
+        radius = self.radius
+        radius_squared = self.radius_squared
 
-            if random.random() < 0.2:
-                extra_velocity = random.uniform(0.2, 0.5)
-                self.velocity = (
-                    self.velocity[0] * (1 + extra_velocity),
-                    self.velocity[1] * (1 + extra_velocity)
-                )
+        # Handle collisions with the edges of the window
+        if x - radius < 0:
+            x = radius
+            vx = -vx * self.damping
+        elif x + radius > width:
+            x = width - radius
+            vx = -vx * self.damping
+
+        if y - radius < 0:
+            y = radius
+            vy = -vy * self.damping
+        elif y + radius > height:
+            y = height - radius
+            vy = -vy * self.damping
+
+        self.position = (x, y)
+        self.velocity = (vx, vy)
 
     def draw(self, surface: pygame.Surface):
         pygame.draw.circle(surface, self.color, (int(self.position[0]), int(self.position[1])), int(self.radius))
