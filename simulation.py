@@ -44,7 +44,12 @@ class Simulation:
         self.check_collisions()
 
     def update_ball(self, ball):
-        ball.update(self.gravity, self.dt, self.width, self.height)
+        # Reduce update frequency for slow-moving balls
+        if np.linalg.norm(ball.velocity) < 0.1:
+            ball.update(self.gravity, self.dt * 10, self.width, self.height)
+        else:
+            ball.update(self.gravity, self.dt, self.width, self.height)
+
         self.quad_tree.insert(ball)
 
     def draw(self, surface):
