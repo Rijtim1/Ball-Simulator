@@ -8,6 +8,8 @@ import math
 from quadtree import QuadTree
 from ball import Ball
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from ball_sprite import BallSprite  # Import the BallSprite class
+
 
 class Simulation:
     def __init__(self):
@@ -46,8 +48,15 @@ class Simulation:
         self.quad_tree.insert(ball)
 
     def draw(self, surface):
+        # Create a sprite group to hold all ball sprites
+        ball_sprites = pygame.sprite.Group()
+
+        # Update and draw all ball sprites
         for ball in self.balls:
-            ball.draw(surface)
+            ball_sprite = BallSprite(ball)
+            ball_sprites.add(ball_sprite)
+
+        ball_sprites.draw(surface)
 
         if not self.first_ball_added:
             font = self.get_font(None, 36)
@@ -63,6 +72,7 @@ class Simulation:
             collision_text = f"Number of collisions: {self.number_collisions}"
             collision_text_render = font.render(collision_text, True, (255, 255, 255))
             surface.blit(collision_text_render, (0, 40))
+
             
         
     def get_font(self, font_name, font_size):
