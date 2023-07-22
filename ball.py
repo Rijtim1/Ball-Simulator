@@ -1,20 +1,19 @@
 # ball.py
 import pygame
-from typing import Tuple
+import numpy as np
 import random
-import math
 
 class Ball:
     def __init__(self, position, velocity, radius, color):
-        self.position = position
-        self.velocity = velocity
+        self.position = np.array(position, dtype=float)
+        self.velocity = np.array(velocity, dtype=float)
         self.radius = radius
         self.radius_squared = radius ** 2
         self.color = color
         self.damping = 0.9
         self.random_values = {}  # Dynamic programming table for storing random values
 
-    def get_random_value(self, key: str, probability: float, value_range: Tuple[float, float]) -> float:
+    def get_random_value(self, key: str, probability: float, value_range: tuple) -> float:
         """
         Get a random value for the given key from the dynamic programming table.
         If the key is not present, generate a new random value and store it in the table.
@@ -25,33 +24,30 @@ class Ball:
             return 1.0 + self.random_values[key]
         return 1.0
 
-    def update(self, gravity: Tuple[float, float], dt: float, width: int, height: int):
+    def update(self, gravity, dt, width, height):
         dt_squared = dt * dt
 
-        x, y = self.position
-        vx, vy = self.velocity
-        radius = self.radius
+        # Convert gravity and dt_squared to NumPy arrays
+        gravity = np.array(gravity, dtype=float)
+        dt_squared = np.array(dt_squared, dtype=float)
 
         # Update position using Verlet integration with caching
-        new_x = x + vx * dt + 0.5 * gravity[0] * dt_squared
-        new_y = y + vy * dt + 0.5 * gravity[1] * dt_squared
+        new_position = self.position + self.velocity * dt + 0.5 * gravity * dt_squared
 
-        self.position = (new_x, new_y)
+        self.position = new_position
 
         # Update velocity using Verlet integration with caching
-        new_vx = vx + 0.5 * gravity[0] * dt
-        new_vy = vy + 0.5 * gravity[1] * dt
+        new_velocity = self.velocity + 0.5 * gravity * dt
 
-        self.velocity = (new_vx, new_vy)
+        self.velocity = new_velocity
 
         # Check for collisions with the edges of the window
         self.handle_collisions(width, height)
 
-    def handle_collisions(self, width: int, height: int):
+    def handle_collisions(self, width, height):
         x, y = self.position
         vx, vy = self.velocity
         radius = self.radius
-        radius_squared = self.radius_squared
 
         # Handle collisions with the edges of the window
         if x - radius < 0:
@@ -68,8 +64,8 @@ class Ball:
             y = height - radius
             vy = -vy * self.damping
 
-        self.position = (x, y)
-        self.velocity = (vx, vy)
+        self.position = np.array([x, y])
+        self.velocity = np.array([vx, vy])
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, surface):
         pygame.draw.circle(surface, self.color, (int(self.position[0]), int(self.position[1])), int(self.radius))
