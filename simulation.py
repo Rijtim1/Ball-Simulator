@@ -5,12 +5,14 @@ import numpy as np
 import pygame
 import random
 import math
+from quadtree import QuadTree
 from ball import Ball
+
 
 class Simulation:
     def __init__(self):
         self.balls: List[Ball] = []
-        self.gravity = np.array([0, 0.098], dtype=float)  # Set gravity as a NumPy array
+        self.gravity = np.array([0, 0.098], dtype=float)
         self.dt = 0.1
         self.height = 600
         self.width = 800
@@ -18,25 +20,28 @@ class Simulation:
         self.first_ball_added = False
         self.collision_sound = None
         self.number_collisions = 0
+        self.quad_tree = QuadTree((0, 0, self.width, self.height))
 
     def add_ball(self, ball: Ball):
         self.balls.append(ball)
         self.first_ball_added = True
 
     def update(self):
+        self.quad_tree = QuadTree((0, 0, self.width, self.height))
         for ball in self.balls:
             ball.update(self.gravity, self.dt, self.width, self.height)
+            self.quad_tree.insert(ball)
         self.check_collisions()
 
     def draw(self, surface):
         for ball in self.balls:
             ball.draw(surface)
-            
+
         if not self.first_ball_added:
             font = pygame.font.Font(None, 36)
             text = font.render("Press the mouse button to create a new ball, or keep the button pressed to enlarge the ball's size.", True, (255, 255, 255))
             surface.blit(text, (0, 0))
-        
+
         if self.debug_mode:
             font = pygame.font.Font(None, 36)
             debug_text = f"Number of balls: {len(self.balls)}"
@@ -49,13 +54,18 @@ class Simulation:
 
     def toggle_debug_mode(self):
         self.debug_mode = not self.debug_mode
-        
+
     def check_collisions(self):
-        for ball1, ball2 in combinations(self.balls, 2):
-            distance = np.linalg.norm(ball2.position - ball1.position)
-            if distance <= ball1.radius + ball2.radius:
-                self.number_collisions += 1
-                self.resolve_collision(ball1, ball2)
+        for ball in self.balls:
+            collidable_balls = self.quad_tree.get_collidable_balls(ball)
+            for other_ball in collidable_balls:
+                if self.is_collision(ball, other_ball):
+                    self.number_collisions += 1
+                    self.resolve_collision(ball, other_ball)
+
+    def is_collision(self, ball1, ball2):
+        distance = np.linalg.norm(ball2.position - ball1.position)
+        return distance <= ball1.radius + ball2.radius
 
     def resolve_collision(self, ball1, ball2):
         # Calculate the relative position and velocity
