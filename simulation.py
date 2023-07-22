@@ -7,7 +7,7 @@ import random
 import math
 from quadtree import QuadTree
 from ball import Ball
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class Simulation:
     def __init__(self):
@@ -31,10 +31,19 @@ class Simulation:
 
     def update(self):
         self.quad_tree = QuadTree((0, 0, self.width, self.height))
-        for ball in self.balls:
-            ball.update(self.gravity, self.dt, self.width, self.height)
-            self.quad_tree.insert(ball)
+
+        # Use ThreadPoolExecutor for parallel updates
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(self.update_ball, ball) for ball in self.balls]
+
+            for future in as_completed(futures):
+                future.result()
+
         self.check_collisions()
+
+    def update_ball(self, ball):
+        ball.update(self.gravity, self.dt, self.width, self.height)
+        self.quad_tree.insert(ball)
 
     def draw(self, surface):
         for ball in self.balls:
