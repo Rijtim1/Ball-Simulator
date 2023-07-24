@@ -1,10 +1,10 @@
 # simulation.py
 from typing import List
-from itertools import combinations
+# from itertools import combinations
 import numpy as np
 import pygame
-import random
-import math
+# import random
+# import math
 from quadtree import QuadTree
 from ball import Ball
 from concurrent.futures import ThreadPoolExecutor, as_completed
