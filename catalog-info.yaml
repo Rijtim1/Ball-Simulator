@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: Ball-Simulator
+  annotations:
+    github.com/project-slug: Rijtim1/Ball-Simulator
+spec:
+  type: other
+  lifecycle: unknown
+  owner: rijtim1
